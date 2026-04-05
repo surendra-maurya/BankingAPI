@@ -1,0 +1,28 @@
+﻿# Ignore git files
+.git
+.gitignore
+
+# Ignore build outputs
+bin/
+obj/
+out/
+
+# Ignore IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Ignore test files
+**/*Tests/
+**/*Test/
+
+# Ignore documentation
+*.md
+LICENSE
+
+# Ignore local docker files
+docker-compose.override.yml
+
+# Ignore Kubernetes files (we'll use them separately)
+k8s/

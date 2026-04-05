@@ -1,0 +1,56 @@
+﻿# Docker Compose version
+version: '3.8'
+
+# Define services
+services:
+  # Our Banking API service
+  banking-api:
+    # Build configuration
+    build:
+      context: .                    # Build context (current directory)
+      dockerfile: Dockerfile        # Dockerfile to use
+    
+    # Container name
+    container_name: banking-api
+    
+    # Image name and tag
+    image: banking-api:1.0
+    
+    # Port mapping: HOST:CONTAINER
+    ports:
+      - "5000:8080"                # Access via http://localhost:5000
+    
+    # Environment variables
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    
+    # Volume mounts (persist data)
+    volumes:
+      - ./Data:/app/Data           # Mount data directory
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+# Optional: Define networks
+networks:
+  default:
+    name: banking-network

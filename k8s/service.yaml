@@ -1,0 +1,44 @@
+﻿# Service - Network endpoint for accessing pods
+# This creates a stable IP/DNS name for our application
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-api-service
+  namespace: banking-app
+  labels:
+    app: banking-api
+spec:
+  # Service type
+  # ClusterIP: Internal only (default)
+  # NodePort: External access via node port
+  # LoadBalancer: Cloud load balancer
+  type: NodePort
+  
+  # Port configuration
+  ports:
+    - name: http
+      port: 80           # Service port (internal)
+      targetPort: 8080   # Container port
+      nodePort: 30080    # External port (30000-32767)
+      protocol: TCP
+  
+  # Select pods with these labels
+  selector:
+    app: banking-api
+---
+# Internal service for health checks
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-api-internal
+  namespace: banking-app
+  labels:
+    app: banking-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: banking-api

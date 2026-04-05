@@ -1,0 +1,9 @@
+﻿# Namespace - Logical isolation for our application
+# Think of it like a folder to organize resources
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: banking-app
+  labels:
+    app: banking
+    environment: development

@@ -1,0 +1,24 @@
+﻿# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-config
+  namespace: banking-app
+  labels:
+    app: banking-api
+data:
+  # Environment settings
+  ASPNETCORE_ENVIRONMENT: "Development"
+  LOG_LEVEL: "Information"
+  ENABLE_SWAGGER: "true"
+  
+  # Application settings JSON (if needed)
+  appsettings.Production.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      }
+    }

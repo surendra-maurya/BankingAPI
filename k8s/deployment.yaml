@@ -1,0 +1,136 @@
+﻿# Deployment - Manages our application pods
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-api
+  namespace: banking-app
+  labels:
+    app: banking-api
+    version: v1
+spec:
+  # Number of pod replicas
+  replicas: 3
+  
+  # How to identify pods belonging to this deployment
+  selector:
+    matchLabels:
+      app: banking-api
+  
+  # Strategy for updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Max pods above desired count during update
+      maxUnavailable: 0  # Max unavailable pods during update (zero downtime)
+  
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app: banking-api
+        version: v1
+      annotations:
+        # Forces pod restart when configmap changes
+        checksum/config: "{{ .Values.configChecksum }}"
+    spec:
+      # Security context for the pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      # Containers in the pod
+      containers:
+        - name: banking-api
+          # Image to use (update with your registry)
+          image: banking-api:1.0
+          imagePullPolicy: IfNotPresent
+          
+          # Container ports
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: banking-config
+          
+          # Individual environment variables
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: banking-secrets
+                  key: API_KEY
+          
+          # Resource limits and requests
+          resources:
+            requests:
+              cpu: "100m"      # 0.1 CPU core
+              memory: "128Mi"  # 128 MB RAM
+            limits:
+              cpu: "500m"      # 0.5 CPU core
+              memory: "512Mi"  # 512 MB RAM
+          
+          # Liveness probe - Is the container alive?
+          # If this fails, Kubernetes restarts the container
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe - Is the container ready to accept traffic?
+          # If this fails, pod is removed from service endpoints
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          # Startup probe - For slow-starting containers
+          startupProbe:
+            httpGet:
+              path: /api/health/live
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+          
+          # Volume mounts
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/Data
+            - name: config-volume
+              mountPath: /app/config
+              readOnly: true
+      
+      # Volumes
+      volumes:
+        - name: data-volume
+          emptyDir: {}  # Temporary storage (use PersistentVolume for production)
+        - name: config-volume
+          configMap:
+            name: banking-config
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # Grace period for shutdown
+      terminationGracePeriodSeconds: 30
