@@ -1,0 +1,68 @@
+﻿apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: transaction-report-job
+  namespace: banking-app
+  labels:
+    app: banking-api
+    type: cronjob
+spec:
+  # Schedule: Every hour at minute 0
+  schedule: "0 * * * *"
+  
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  suspend: false
+  
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 3600
+      backoffLimit: 3
+      
+      template:
+        metadata:
+          labels:
+            app: transaction-report
+        spec:
+          containers:
+            - name: transaction-report
+              image: curlimages/curl:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=========================================="
+                  echo "Transaction Report - $(date)"
+                  echo "=========================================="
+                  
+                  echo ""
+                  echo "Fetching transaction summary..."
+                  echo ""
+                  
+                  # Fetch transactions
+                  curl -s http://banking-api-service.banking-app.svc.cluster.local/api/transaction | head -500
+                  
+                  echo ""
+                  echo ""
+                  echo "Fetching account summaries..."
+                  echo ""
+                  
+                  # Fetch accounts
+                  curl -s http://banking-api-service.banking-app.svc.cluster.local/api/account
+                  
+                  echo ""
+                  echo ""
+                  echo "Report generation completed at $(date)"
+                  echo "=========================================="
+              
+              resources:
+                requests:
+                  memory: "64Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "128Mi"
+                  cpu: "200m"
+          
+          restartPolicy: OnFailure

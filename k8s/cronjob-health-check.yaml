@@ -1,0 +1,72 @@
+﻿apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: health-check-job
+  namespace: banking-app
+  labels:
+    app: banking-api
+    type: cronjob
+spec:
+  # SCHEDULE: Every minute
+  schedule: "*/1 * * * *"
+  
+  # Timezone (optional, requires Kubernetes 1.27+)
+  # timeZone: "Asia/Kolkata"
+  
+  # CONCURRENCY POLICY
+  # Allow: Allow concurrent jobs
+  # Forbid: Skip if previous job still running
+  # Replace: Replace previous job with new one
+  concurrencyPolicy: Forbid
+  
+  # JOB HISTORY
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  # SUSPEND (set to true to pause the cronjob)
+  suspend: false
+  
+  # JOB TEMPLATE
+  jobTemplate:
+    spec:
+      # Auto-delete job after completion (seconds)
+      ttlSecondsAfterFinished: 100
+      
+      template:
+        metadata:
+          labels:
+            app: health-check
+        spec:
+          containers:
+            - name: health-check
+              image: curlimages/curl:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=========================================="
+                  echo "Starting Health Check at $(date)"
+                  echo "=========================================="
+                  
+                  # Call health endpoint
+                  RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://banking-api-service.banking-app.svc.cluster.local/api/health)
+                  
+                  if [ "$RESPONSE" = "200" ]; then
+                    echo "Health Check PASSED! Status: $RESPONSE"
+                    exit 0
+                  else
+                    echo "Health Check FAILED! Status: $RESPONSE"
+                    exit 1
+                  fi
+              
+              resources:
+                requests:
+                  memory: "32Mi"
+                  cpu: "50m"
+                limits:
+                  memory: "64Mi"
+                  cpu: "100m"
+          
+          # RESTART POLICY (must be Never or OnFailure for Jobs)
+          restartPolicy: OnFailure
