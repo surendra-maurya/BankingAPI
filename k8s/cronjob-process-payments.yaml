@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: process-pending-payments
+  namespace: banking-app
+  labels:
+    app: banking-api
+    type: cronjob
+spec:
+  # Schedule: Every 10 minutes
+  schedule: "*/10 * * * *"
+  
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  suspend: false
+  
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      backoffLimit: 3
+      activeDeadlineSeconds: 300
+      
+      template:
+        metadata:
+          labels:
+            app: payment-processor
+        spec:
+          containers:
+            - name: payment-processor
+              image: banking-api:1.0
+              imagePullPolicy: IfNotPresent
+              
+              # Override the default entrypoint
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Processing pending payments at $(date)"
+                  
+                  # Call your API endpoint to process pending payments
+                  curl -X POST http://localhost:8080/api/payment/process-pending || true
+                  
+                  echo "Payment processing completed at $(date)"
+              
+              env:
+                - name: ASPNETCORE_ENVIRONMENT
+                  value: "Production"
+                - name: JOB_TYPE
+                  value: "PAYMENT_PROCESSOR"
+              
+              envFrom:
+                - configMapRef:
+                    name: banking-config
+              
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+          
+          restartPolicy: OnFailure

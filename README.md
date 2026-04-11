@@ -185,6 +185,70 @@ curl -X POST http://localhost:30080/api/payment/upi \
 
 ---
 
+
+## 🗺️ The Complete Journey
+┌─────────────────────────────────────────────────────────────────────┐
+│              .NET APP → DOCKER → KUBERNETES JOURNEY                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  PHASE 1: DEVELOP                                                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                                                              │   │
+│  │  Your .NET Code                                              │   │
+│  │  ┌────────────────────────────────────────────────────────┐  │   │
+│  │  │  Controllers/PaymentController.cs                      │  │   │
+│  │  │  Services/UPIPaymentService.cs                         │  │   │
+│  │  │  Models/PaymentRequest.cs                              │  │   │
+│  │  │  Program.cs                                            │  │   │
+│  │  │  appsettings.json                                      │  │   │
+│  │  │  BankingAPI.csproj                                     │  │   │
+│  │  │  Data/accounts.json                                    │  │   │
+│  │  └────────────────────────────────────────────────────────┘  │   │
+│  │                                                              │   │
+│  │  This is just C# code. Cannot run on Kubernetes directly.    │   │
+│  │                                                              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                         │                                           │
+│                         ▼                                           │
+│  PHASE 2: BUILD DOCKER IMAGE                                        │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                                                              │   │
+│  │  Dockerfile tells Docker HOW to build                        │   │
+│  │                                                              │   │
+│  │  Command: docker build -t banking-api:1.0 .                  │   │
+│  │                                                              │   │
+│  │  Result: Docker Image (banking-api:1.0)                      │   │
+│  │  ┌───────────────────────────────────────────────────────┐   │   │
+│  │  │  Layer 1: Linux OS (Alpine)                           │   │   │
+│  │  │  Layer 2: .NET 8 Runtime                              │   │   │
+│  │  │  Layer 3: Your compiled DLLs                          │   │   │
+│  │  │  Layer 4: Data files, configs                         │   │   │
+│  │  └───────────────────────────────────────────────────────┘   │   │
+│  │                                                              │   │
+│  │  Image is stored in Docker's local image store               │   │
+│  │                                                              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                         │                                           │
+│                         ▼                                           │
+│  PHASE 3: DEPLOY TO KUBERNETES                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                                                              │   │
+│  │  Kubernetes YAML files tell K8s WHAT to run and HOW          │   │
+│  │                                                              │   │
+│  │  Command: kubectl apply -f k8s/                              │   │
+│  │                                                              │   │
+│  │  Result: Running application on Kubernetes                   │   │
+│  │  ┌───────────────────────────────────────────────────────┐   │   │
+│  │  │  Pod 1: banking-api container (from Docker image)     │   │   │
+│  │  │  Pod 2: banking-api container (from Docker image)     │   │   │
+│  │  │  Pod 3: banking-api container (from Docker image)     │   │   │
+│  │  │  Service: Load balances traffic to pods               │   │   │
+│  │  └───────────────────────────────────────────────────────┘   │   │
+│  │                                                              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
 ## 👤 Author
 
 **Surendra**
