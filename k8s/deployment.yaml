@@ -9,7 +9,7 @@ metadata:
     version: v1
 spec:
   # Number of pod replicas
-  replicas: 3
+  replicas: 5
   
   # How to identify pods belonging to this deployment
   selector:
