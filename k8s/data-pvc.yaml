@@ -1,0 +1,15 @@
+# Persistent storage for the JSON account and transaction files.
+# Omit storageClassName to use the cluster's default StorageClass.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: banking-api-data
+  namespace: banking-app
+  labels:
+    app: banking-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

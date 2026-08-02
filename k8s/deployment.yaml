@@ -9,7 +9,9 @@ metadata:
     version: v1
 spec:
   # Number of pod replicas
-  replicas: 3
+  # JSON files are mutable application state, so this deployment must have one writer.
+  # Use a database before increasing this value.
+  replicas: 1
   
   # How to identify pods belonging to this deployment
   selector:
@@ -17,11 +19,9 @@ spec:
       app: banking-api
   
   # Strategy for updates
+  # Prevent two pods from writing the same JSON files during an image update.
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1        # Max pods above desired count during update
-      maxUnavailable: 0  # Max unavailable pods during update (zero downtime)
+    type: Recreate
   
   # Pod template
   template:
@@ -38,6 +38,27 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+
+      # Copy the seed data bundled in the image only when the persistent files do
+      # not already exist. The PVC is mounted at /data, avoiding an overlay of
+      # the image's /app/Data directory.
+      initContainers:
+        - name: seed-data-files
+          image: banking-api:1.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              for file in accounts.json transactions.json; do
+                if [ ! -f "/data/$file" ]; then
+                  cp "/app/Data/$file" "/data/$file"
+                fi
+              done
+          volumeMounts:
+            - name: data-volume
+              mountPath: /data
       
       # Containers in the pod
       containers:
@@ -59,6 +80,10 @@ spec:
           
           # Individual environment variables
           env:
+            - name: DataFiles__AccountsPath
+              value: /data/accounts.json
+            - name: DataFiles__TransactionsPath
+              value: /data/transactions.json
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -116,7 +141,7 @@ spec:
           # Volume mounts
           volumeMounts:
             - name: data-volume
-              mountPath: /app/Data
+              mountPath: /data
             - name: config-volume
               mountPath: /app/config
               readOnly: true
@@ -124,7 +149,8 @@ spec:
       # Volumes
       volumes:
         - name: data-volume
-          emptyDir: {}  # Temporary storage (use PersistentVolume for production)
+          persistentVolumeClaim:
+            claimName: banking-api-data
         - name: config-volume
           configMap:
             name: banking-config

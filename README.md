@@ -92,8 +92,11 @@ kubectl apply -f k8s/
 # Verify deployment
 kubectl get pods -n banking-app
 
+# Find how the app is exposed
+kubectl get svc -n banking-app
+
 # Access application
-http://localhost:30080/swagger
+http://localhost:30080/index.html
 ```
 
 ---

@@ -11,8 +11,10 @@ spec:
     name: banking-api
   
   # Min and max replicas
-  minReplicas: 2
-  maxReplicas: 10
+  # The JSON repositories write mutable local state and cannot safely scale out.
+  # Move this state to a database before enabling horizontal scaling.
+  minReplicas: 1
+  maxReplicas: 1
   
   # Scaling metrics
   metrics:
