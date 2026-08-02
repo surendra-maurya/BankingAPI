@@ -41,7 +41,7 @@ spec:
 
       # Copy the seed data bundled in the image only when the persistent files do
       # not already exist. The PVC is mounted at /data, avoiding an overlay of
-      # the image's /app/Data directory.
+      # the image's /app/Data directory
       initContainers:
         - name: seed-data-files
           image: banking-api:1.0
